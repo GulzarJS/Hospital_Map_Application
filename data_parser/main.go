@@ -43,10 +43,10 @@ func main() {
 	var mu sync.Mutex
 
 	boundsBaku := bounds{
-		topLat:    40.4670,
-		bottomLat: 40.3328,
-		leftLon:   49.7487,
-		rightLon:  49.9624,
+		topLat:    40.3829,
+		bottomLat: 40.3691,
+		leftLon:   49.8291,
+		rightLon:  49.8596,
 	}
 
 	f, err := os.Open(".\\data\\azerbaijan-latest.osm.pbf")
