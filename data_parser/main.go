@@ -9,12 +9,20 @@ import (
 	"log"
 	"math"
 	"os"
+	_ "strconv"
 	"sync"
 	"time"
 
+	_ "fyne.io/fyne/widget"
 	"github.com/paulmach/osm/osmpbf"
 
+	_ "image/color"
+
 	"github.com/paulmach/osm"
+
+	_ "fyne.io/fyne"
+	_ "fyne.io/fyne/app"
+	_ "fyne.io/fyne/canvas"
 )
 
 var Nodes map[osm.NodeID]osm.Node
@@ -35,7 +43,11 @@ func main() {
 	Ways = make(map[osm.WayID]osm.Way)
 
 	records := [][]string{
-		{"a_node_id", "b_node_id", "distance"},
+		{"a_node_id", "b_node_id", "distance", "a_node_lat", "a_node_lon", "b_node_lat", "b_node_lon"},
+	}
+
+	nodesHospitals := [][]string{
+		{"node_id", "name", "lat", "lon"},
 	}
 
 	startInit := time.Now()
@@ -71,6 +83,32 @@ func main() {
 			var node *osm.Node = o.(*osm.Node)
 			Nodes[node.ID] = *node
 
+			if boundsBaku.checkBounds(*node, *node) {
+				if name, ok := node.TagMap()["amenity"]; ok && name == "hospital" {
+					//log.Printf("amenity: %v", node.TagMap())
+					hospitalName := ""
+					if name, ok := node.TagMap()["name:tr"]; ok {
+						hospitalName = name
+					}
+					if name, ok := node.TagMap()["name:az"]; ok {
+						hospitalName = name
+					}
+					if name, ok := node.TagMap()["name:en"]; ok {
+						hospitalName = name
+					}
+					if name, ok := node.TagMap()["name"]; ok {
+						hospitalName = name
+					}
+
+					nodesHospitals = append(nodesHospitals, []string{
+						fmt.Sprintf("%d", int64(node.ID)),
+						hospitalName,
+						fmt.Sprintf("%f", node.Lat),
+						fmt.Sprintf("%f", node.Lon),
+					})
+				}
+			}
+
 			break
 		case "way":
 			var way *osm.Way = o.(*osm.Way)
@@ -92,6 +130,10 @@ func main() {
 									fmt.Sprintf("%d", int64(firstNode.ID)),
 									fmt.Sprintf("%d", int64(Nodes[nodeID].ID)),
 									fmt.Sprintf("%f", calcDist(firstNode, Nodes[nodeID])),
+									fmt.Sprintf("%f", firstNode.Lat),
+									fmt.Sprintf("%f", firstNode.Lon),
+									fmt.Sprintf("%f", Nodes[nodeID].Lat),
+									fmt.Sprintf("%f", Nodes[nodeID].Lon),
 								})
 
 							mu.Unlock()
@@ -109,7 +151,7 @@ func main() {
 	elapsed = time.Since(startScan)
 	log.Printf("Scanning took %s", elapsed)
 
-	elemSizeVerbose("records", records)
+	ElemSizeVerbose("records", records)
 
 	startInit = time.Now()
 
@@ -123,6 +165,16 @@ func main() {
 
 	w := csv.NewWriter(fCsv)
 
+	fCsvHospitals, err := os.Create(".\\data\\datasHospitals.csv")
+
+	defer fCsvHospitals.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
+	wHospitals := csv.NewWriter(fCsvHospitals)
+
 	elapsed = time.Since(startInit)
 	log.Printf("CSV initialization took %s", elapsed)
 
@@ -130,12 +182,18 @@ func main() {
 
 	err = w.WriteAll(records)
 
-	elapsed = time.Since(startWrite)
-	log.Printf("CSV write took %s", elapsed)
+	if err != nil {
+		panic(err)
+	}
+
+	err = wHospitals.WriteAll(nodesHospitals)
 
 	if err != nil {
 		panic(err)
 	}
+
+	elapsed = time.Since(startWrite)
+	log.Printf("CSV write took %s", elapsed)
 
 	elapsed = time.Since(startMain)
 	log.Printf("Program took %s", elapsed)
@@ -160,12 +218,12 @@ func (boundsA bounds) checkBounds(aNode, bNode osm.Node) bool {
 		bNode.Lon >= boundsA.leftLon && bNode.Lon <= boundsA.rightLon
 }
 
-func elemSizeVerbose(name string, container interface{}) {
+func ElemSizeVerbose(name string, container interface{}) {
 	b := new(bytes.Buffer)
 	if err := gob.NewEncoder(b).Encode(container); err != nil {
 		fmt.Println("Error reading size")
 		return
 	}
 
-	fmt.Printf("Size of %s is %f\n", name, float64(b.Len())/1024)
+	fmt.Printf("Size of %s is %d\n", name, b.Len())
 }
