@@ -1,10 +1,16 @@
-import pandas as pd
 import networkx as nx
-import matplotlib.pyplot as plt
-import numpy as np
+import pandas as pd
 
 
-def getSource(data):
+# Function to get DataFrame from file
+def getData(filename):
+    data = pd.read_csv(filename)
+    return data
+
+
+# Function to get source nodes from file
+def getSource():
+    data = getData("../data_parser/data/datas.csv")
     sourcesList = list()
     for i in range(0, len(data)):
         sourcesList.append(data.at[i, 'a_node_id'])
@@ -12,49 +18,49 @@ def getSource(data):
     return source
 
 
-def getDestination(data):
-    sourcesList = list()
+# Function to get nodes of hospitals
+def getHospitals():
+    data = getData("../data_parser/data/datasHospitals.csv")
+    hospitals = dict()
     for i in range(0, len(data)):
-        sourcesList.append(data.at[i, 'b_node_id'])
-    source = tuple(sourcesList)
-    return source
+        hospitals[data.at[i, 'name']] = data.at[i, 'nearestWayNode']
 
-def shortestPath(data,source, destination):
+    return hospitals
+
+
+# Function to get shortest path between given nodes
+def shortestPath(source, destination):
+    data = getData("../data_parser/data/datas.csv")
     G = nx.from_pandas_edgelist(data, source='a_node_id', target='b_node_id', edge_attr=True, create_using=nx.DiGraph)
     path = nx.shortest_path(G, source, destination, weight="distance")
 
     return path
 
 
-def findDistance(data, source, destination):
+# Function to get distance of shortest path between given nodes
+def findDistance(source, destination):
+    data = getData("../data_parser/data/datas.csv")
     G = nx.from_pandas_edgelist(data, source='a_node_id', target='b_node_id', edge_attr=True, create_using=nx.DiGraph)
     distance = nx.dijkstra_path_length(G, source, destination, weight="distance")
     return distance
 
 
+# Function to get time of travel by car
+def getCarTime(distance):
+    speed = 50  # km per hour
+    time = distance / speed
+    return time
 
-#
-# print('\n\tThe Dataframe:\n\t(printing only 5 rows)\n')
-# data = pd.read_csv('../data_parser/data/datas.csv')
-#
-# print(data.head())  # to see first rows of the dataframe (will return 5 rows by default)
-# print(data.columns)  # to see all column titles of the dataframe
-# G = nx.from_pandas_edgelist(data, source='a_node_id', target='b_node_id', edge_attr=True, create_using=nx.DiGraph)
-# #
-# # # Plot the graph
-# # plt.figure(figsize=(20, 20))
-# # nx.draw_networkx(G, with_labels=True)
-# # plt.show()
-#
-# # Metrics
-# # Yet to be added
-#
-#
-# # degree = in_degree + out_degree
-# print('Degree of 1416166971', G.degree(1416166971))
-#
-# # Path with weight
-# print("\nThe shortest path with weights:\n",
-#       nx.shortest_path(G, source=2290884752, target=276846064, weight="distance"))
-# print("The length of the shortest path: ",
-#
+
+# Function to get time of travel by bicycle
+def getBicycleTime(distance):
+    speed = 25  # km per hour
+    time = distance / speed
+    return time
+
+
+# Function to get time of travel on foot
+def getPedestrianTime(distance):
+    speed = 5  # km per hour
+    time = distance / speed
+    return time
