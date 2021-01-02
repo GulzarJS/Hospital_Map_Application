@@ -18,9 +18,11 @@ column1 = [[sg.Text('Column 1', background_color='lightblue', justification='cen
 map_layout = [
     # [sg.Text('Network Algorithms Final Project', size=(25, 1), justification='center', font=("Helvetica", 16),
     #          relief=sg.RELIEF_RIDGE)],
-    [sg.Graph(canvas_size=(400, 400), graph_bottom_left=(0,0), graph_top_right=(400, 400), background_color='white', key='graph')],
-    [sg.Text('Enter Source '), sg.InputCombo(tuple(hospitals.keys()), size=(30, 15), key='source')],
-    [sg.Text('Enter Target  '), sg.InputCombo(tuple(hospitals.keys()), size=(30, 15), key='dest')],
+    # [sg.Frame(layout=[[sg.Image(r'map.png')]], title='Map', title_color='magenta', relief=sg.RELIEF_SUNKEN,
+    #           tooltip='Use these to set flags')],
+    [sg.Graph(canvas_size=(800, 400), graph_bottom_left=(0,0), graph_top_right=(400, 200), background_color='lightgray', key='graph')],
+    [sg.Text('Enter Source '), sg.InputCombo(source, size=(20, 1), key='source')],
+    [sg.Text('Enter Target '), sg.InputCombo(destination, size=(20, 1), key='dest')],
     [sg.Button('Go'), sg.Button('Exit')]
 ]
 
@@ -43,20 +45,25 @@ path_layout = [
 
 layout = [[sg.TabGroup([[sg.Tab('Map', map_layout), sg.Tab('Path', path_layout)]], key='Tabs')]]
 
-window = sg.Window("Hospital Map Application", layout, default_element_size=(40, 1), grab_anywhere=False)
+window = sg.Window("Hospital Map Application", layout, default_element_size=(40, 1), grab_anywhere=False, size=(1000, 800))
 
 window.Finalize()
 
 graph = window['graph']
-waysLines = {}
+waysLinesBlack = {}
+waysLinesGreen = {}
 hospitalsPoints = {}
 
 
 for i in range(len(data)):
-    waysLines[str(data.at[i, 'a_node_id']) + ","+ str(data.at[i, 'b_node_id'])] = graph.DrawLine(((data.at[i, 'a_node_lon'] - 49.8291) * 10000, (data.at[i, 'a_node_lat']-40.3691)*28000), ((data.at[i, 'b_node_lon'] - 49.8291) * 10000, (data.at[i, 'b_node_lat']-40.3691)*28000))
+    waysLinesGreen[str(data.at[i, 'a_node_id']) + ","+ str(data.at[i, 'b_node_id'])] = graph.DrawLine(((data.at[i, 'a_node_lon'] - 49.8291) * 10000, (data.at[i, 'a_node_lat']-40.3691)*14000), ((data.at[i, 'b_node_lon'] - 49.8291) * 10000, (data.at[i, 'b_node_lat']-40.3691)*14000), color='green')
+
+
+for i in range(len(data)):
+    waysLinesBlack[str(data.at[i, 'a_node_id']) + ","+ str(data.at[i, 'b_node_id'])] = graph.DrawLine(((data.at[i, 'a_node_lon'] - 49.8291) * 10000, (data.at[i, 'a_node_lat']-40.3691)*14000), ((data.at[i, 'b_node_lon'] - 49.8291) * 10000, (data.at[i, 'b_node_lat']-40.3691)*14000))
 
 for i in range(len(dataHospitals)):
-    hospitalsPoints[str(dataHospitals.at[i, 'nearestWayNode'])] = graph.DrawCircle(((dataHospitals.at[i, 'lon'] - 49.8291) * 10000, (dataHospitals.at[i, 'lat'] - 40.3691) * 28000), 3, fill_color='red')
+    hospitalsPoints[str(dataHospitals.at[i, 'node_id'])] = graph.DrawCircle(((dataHospitals.at[i, 'lon'] - 49.8291) * 10000, (dataHospitals.at[i, 'lat'] - 40.3691) * 14000), 3, fill_color='red')
 
 while True:
     event, values = window.read()
@@ -65,8 +72,26 @@ while True:
     if event == 'Go To Map':
         window['Map'].select()
     if event == 'Go':
-        path = networks.shortestPath(hospitals.get(values['source']), hospitals.get(values['dest']))
-        distance = networks.findDistance(hospitals.get(values['source']), hospitals.get(values['dest']))
+        path = networks.shortestPath(data, values['source'], values['dest'])
+
+        for el in waysLinesGreen:
+            graph.SendFigureToBack(waysLinesGreen[el])
+
+        firstNodeFlag = True
+        firstNode = ""
+        for i in range(len(path)):
+            if firstNodeFlag:
+                firstNode = path[i]
+                firstNodeFlag = False
+                continue
+
+            graph.BringFigureToFront(waysLinesGreen[str(firstNode)+","+str(path[i])])
+
+            firstNode = path[i]
+
+        distance = networks.findDistance(data, values['source'], values['dest'])
+        # window.bind(str(path),, 'Path')
+        print(path)
         window['-PATH-'].update(str(path))
         window['-DISTANCE-'].update(str((distance * 1000).__round__(2)))
         window['-CAR-'].update(networks.getCarTime(distance * 1000).__round__(2))
