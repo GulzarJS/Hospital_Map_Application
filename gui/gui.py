@@ -21,8 +21,8 @@ map_layout = [
     # [sg.Frame(layout=[[sg.Image(r'map.png')]], title='Map', title_color='magenta', relief=sg.RELIEF_SUNKEN,
     #           tooltip='Use these to set flags')],
     [sg.Graph(canvas_size=(800, 400), graph_bottom_left=(0,0), graph_top_right=(400, 200), background_color='lightgray', key='graph')],
-    [sg.Text('Enter Source '), sg.InputCombo(source, size=(20, 1), key='source')],
-    [sg.Text('Enter Target '), sg.InputCombo(destination, size=(20, 1), key='dest')],
+    [sg.Text('Enter Source '), sg.InputCombo(tuple(hospitals.keys()), size=(40, 1), key='source')],
+    [sg.Text('Enter Target '), sg.InputCombo(tuple(hospitals.keys()), size=(40, 1), key='dest')],
     [sg.Button('Go'), sg.Button('Exit')]
 ]
 
@@ -45,7 +45,7 @@ path_layout = [
 
 layout = [[sg.TabGroup([[sg.Tab('Map', map_layout), sg.Tab('Path', path_layout)]], key='Tabs')]]
 
-window = sg.Window("Hospital Map Application", layout, default_element_size=(40, 1), grab_anywhere=False, size=(1000, 800))
+window = sg.Window("Hospital Map Application", layout, default_element_size=(40, 1), grab_anywhere=False, size=(800, 600))
 
 window.Finalize()
 
@@ -71,8 +71,10 @@ while True:
         break
     if event == 'Go To Map':
         window['Map'].select()
+
     if event == 'Go':
-        path = networks.shortestPath(data, values['source'], values['dest'])
+        path = networks.shortestPath(hospitals.get(values['source']), hospitals.get(values['dest']))
+        distance = networks.findDistance(hospitals.get(values['source']),hospitals.get(values['dest']))
 
         for el in waysLinesGreen:
             graph.SendFigureToBack(waysLinesGreen[el])
@@ -89,7 +91,6 @@ while True:
 
             firstNode = path[i]
 
-        distance = networks.findDistance(data, values['source'], values['dest'])
         # window.bind(str(path),, 'Path')
         print(path)
         window['-PATH-'].update(str(path))
