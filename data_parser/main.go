@@ -9,8 +9,8 @@ import (
 	"log"
 	"math"
 	"os"
+	"strconv"
 	_ "strconv"
-	"sync"
 	"time"
 
 	_ "fyne.io/fyne/widget"
@@ -47,12 +47,10 @@ func main() {
 	}
 
 	nodesHospitals := [][]string{
-		{"node_id", "name", "lat", "lon"},
+		{"node_id", "name", "lat", "lon", "nearestWayNode"},
 	}
 
 	startInit := time.Now()
-
-	var mu sync.Mutex
 
 	boundsBaku := bounds{
 		topLat:    40.3829,
@@ -105,6 +103,7 @@ func main() {
 						hospitalName,
 						fmt.Sprintf("%f", node.Lat),
 						fmt.Sprintf("%f", node.Lon),
+						"0",
 					})
 				}
 			}
@@ -124,7 +123,6 @@ func main() {
 					} else {
 
 						if boundsBaku.checkBounds(firstNode, Nodes[nodeID]) {
-							mu.Lock()
 							records = append(records,
 								[]string{
 									fmt.Sprintf("%d", int64(firstNode.ID)),
@@ -136,7 +134,24 @@ func main() {
 									fmt.Sprintf("%f", Nodes[nodeID].Lon),
 								})
 
-							mu.Unlock()
+							for i, nodeHospital := range nodesHospitals {
+								if nodeHospital[4] == "0" {
+									nodesHospitals[i][4] = fmt.Sprintf("%d", firstNode.ID)
+								} else {
+									hospitalNodeID, _ := strconv.Atoi(nodeHospital[0])
+									hospitalNearestNodeID, _ := strconv.Atoi(nodeHospital[4])
+
+									nearestDistance := calcDist(Nodes[osm.NodeID(hospitalNodeID)], Nodes[osm.NodeID(hospitalNearestNodeID)])
+
+									if nearestDistance > calcDist(Nodes[osm.NodeID(hospitalNodeID)], firstNode) {
+										nodesHospitals[i][4] = fmt.Sprintf("%d", firstNode.ID)
+									}
+
+									if nearestDistance > calcDist(Nodes[osm.NodeID(hospitalNodeID)], Nodes[nodeID]) {
+										nodesHospitals[i][4] = fmt.Sprintf("%d", Nodes[nodeID].ID)
+									}
+								}
+							}
 						}
 
 						firstNode = Nodes[nodeID]

@@ -4,6 +4,8 @@ import PySimpleGUI as sg
 from source import networks
 
 data = pd.read_csv('../data_parser/data/datas.csv')
+dataHospitals = pd.read_csv("../data_parser/data/datasHospitals.csv")
+
 source = networks.getSource(data)
 destination = networks.getDestination(data)
 path = tuple()
@@ -17,8 +19,9 @@ column1 = [[sg.Text('Column 1', background_color='lightblue', justification='cen
 map_layout = [
     # [sg.Text('Network Algorithms Final Project', size=(25, 1), justification='center', font=("Helvetica", 16),
     #          relief=sg.RELIEF_RIDGE)],
-    [sg.Frame(layout=[[sg.Image(r'map.png')]], title='Map', title_color='magenta', relief=sg.RELIEF_SUNKEN,
-              tooltip='Use these to set flags')],
+    # [sg.Frame(layout=[[sg.Image(r'map.png')]], title='Map', title_color='magenta', relief=sg.RELIEF_SUNKEN,
+    #           tooltip='Use these to set flags')],
+    [sg.Graph(canvas_size=(400, 400), graph_bottom_left=(0,0), graph_top_right=(400, 400), background_color='white', key='graph')],
     [sg.Text('Enter Source '), sg.InputCombo(source, size=(20, 1), key='source')],
     [sg.Text('Enter Target '), sg.InputCombo(destination, size=(20, 1), key='dest')],
     [sg.Button('Go'), sg.Button('Exit')]
@@ -38,6 +41,19 @@ path_layout = [
 layout = [[sg.TabGroup([[sg.Tab('Map', map_layout), sg.Tab('Path', path_layout)]],key='Tabs')]]
 
 window = sg.Window("Hospital Map Application", layout, default_element_size=(40, 1), grab_anywhere=False)
+
+window.Finalize()
+
+graph = window['graph']
+waysLines = {}
+hospitalsPoints = {}
+
+
+for i in range(len(data)):
+    waysLines[str(data.at[i, 'a_node_id']) + ","+ str(data.at[i, 'b_node_id'])] = graph.DrawLine(((data.at[i, 'a_node_lon'] - 49.8291) * 10000, (data.at[i, 'a_node_lat']-40.3691)*28000), ((data.at[i, 'b_node_lon'] - 49.8291) * 10000, (data.at[i, 'b_node_lat']-40.3691)*28000))
+
+for i in range(len(dataHospitals)):
+    hospitalsPoints[str(dataHospitals.at[i, 'node_id'])] = graph.DrawCircle(((dataHospitals.at[i, 'lon'] - 49.8291) * 10000, (dataHospitals.at[i, 'lat'] - 40.3691) * 28000), 3, fill_color='red')
 
 while True:
     event, values = window.read()
