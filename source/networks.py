@@ -47,20 +47,23 @@ def findDistance(source, destination):
 
 # Function to get time of travel by car
 def getCarTime(distance):
-    speed = 50  # km per hour
+    speed = 16.7  # km per hour
     time = distance / speed
+    time = time / 60  # convert seconds to minutes
     return time
 
 
 # Function to get time of travel by bicycle
 def getBicycleTime(distance):
-    speed = 25  # km per hour
+    speed = 6.95  # km per hour
     time = distance / speed
+    time = time / 60  # convert seconds to minutes
     return time
 
 
 # Function to get time of travel on foot
 def getPedestrianTime(distance):
-    speed = 5  # km per hour
+    speed = 1.39  # km per hour
     time = distance / speed
+    time = time / 60  # convert seconds to minutes
     return time

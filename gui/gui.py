@@ -16,29 +16,30 @@ column1 = [[sg.Text('Column 1', background_color='lightblue', justification='cen
            [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 3')]]
 
 map_layout = [
-    # [sg.Text('Network Algorithms Final Project', size=(25, 1), justification='center', font=("Helvetica", 16),
-    #          relief=sg.RELIEF_RIDGE)],
+    [sg.Text('Network Algorithms Final Project', size=(25, 1), justification='center', font=("Helvetica", 16),
+             relief=sg.RELIEF_RIDGE)],
     # [sg.Frame(layout=[[sg.Image(r'map.png')]], title='Map', title_color='magenta', relief=sg.RELIEF_SUNKEN,
     #           tooltip='Use these to set flags')],
     [sg.Graph(canvas_size=(800, 400), graph_bottom_left=(0,0), graph_top_right=(400, 200), background_color='lightgray', key='graph')],
-    [sg.Text('Enter Source '), sg.InputCombo(tuple(hospitals.keys()), size=(40, 1), key='source')],
-    [sg.Text('Enter Target '), sg.InputCombo(tuple(hospitals.keys()), size=(40, 1), key='dest')],
+    [sg.Text('Enter Source '), sg.InputCombo(tuple(hospitals.keys()), size=(38, 1), key='source'),
+     sg.Text('Enter Target '), sg.InputCombo(tuple(hospitals.keys()), size=(38, 1), key='dest')],
+
     [sg.Button('Go'), sg.Button('Exit')]
 ]
 
 path_layout = [
-    # [sg.Text('Network Algorithms Final Project', size=(25, 1), justification='center', font=("Helvetica", 16),
-    #          relief=sg.RELIEF_RIDGE)],
+    [sg.Text('Network Algorithms Final Project', size=(25, 1), justification='center', font=("Helvetica", 16),
+             relief=sg.RELIEF_RIDGE)],
     [sg.Frame('Path', [[
-        sg.Text('path', size=(35, 3), justification='left', font=("Helvetica", 10), key='-PATH-')]])],
+        sg.Text('path', size=(100, 6), justification='left', font=("Helvetica", 13), key='-PATH-')]])],
     [sg.Frame('Distance', [[
-        sg.Text('distance', size=(25, 1), justification='left', font=("Helvetica", 10), key='-DISTANCE-')]])],
+        sg.Text('distance', size=(100, 2), justification='left', font=("Helvetica", 13), key='-DISTANCE-')]])],
     [sg.Frame('Car', [[
-        sg.Text('time', size=(25, 1), justification='left', font=("Helvetica", 10), key='-CAR-')]])],
+        sg.Text('time', size=(100, 2), justification='left', font=("Helvetica", 13), key='-CAR-')]])],
     [sg.Frame('Bicycle', [[
-        sg.Text('distance', size=(25, 1), justification='left', font=("Helvetica", 10), key='-BICYCLE-')]])],
+        sg.Text('distance', size=(100, 2), justification='left', font=("Helvetica", 13), key='-BICYCLE-')]])],
     [sg.Frame('Pedestrian', [[
-        sg.Text('distance', size=(25, 1), justification='left', font=("Helvetica", 10), key='-PEDESTRIAN-')]])],
+        sg.Text('distance', size=(100, 2), justification='left', font=("Helvetica", 13), key='-PEDESTRIAN-')]])],
     [sg.Button('Go To Map')]
 ]
 
@@ -94,10 +95,9 @@ while True:
         # window.bind(str(path),, 'Path')
         print(path)
         window['-PATH-'].update(str(path))
-        window['-DISTANCE-'].update(str((distance * 1000).__round__(2)))
-        window['-CAR-'].update(networks.getCarTime(distance * 1000).__round__(2))
-        window['-BICYCLE-'].update(networks.getBicycleTime(distance * 1000).__round__(2))
-        window['-PEDESTRIAN-'].update(networks.getPedestrianTime(distance * 1000).__round__(2))
+        window['-DISTANCE-'].update(str((distance).__round__(2)) + " meters")
+        window['-CAR-'].update(str(networks.getCarTime(distance).__round__(2)) + " minutes")
+        window['-BICYCLE-'].update(str(networks.getBicycleTime(distance).__round__(2)) + " minutes")
+        window['-PEDESTRIAN-'].update(str(networks.getPedestrianTime(distance).__round__(2)) + " minutes")
         window.refresh()
-        window['Path'].select()
         continue
