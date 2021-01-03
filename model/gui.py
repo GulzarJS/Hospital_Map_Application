@@ -1,6 +1,6 @@
 # hello_world.py
 import PySimpleGUI as sg
-from model import networks
+import networks
 
 # hospital nodes
 hospitals = networks.getHospitals()
