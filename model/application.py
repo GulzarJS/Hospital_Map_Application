@@ -9,13 +9,6 @@ hospitals = networks.getHospitals()
 path = tuple()
 
 
-# ------ Column Definition ------ #
-column1 = [[sg.Text('Column 1', background_color='lightblue', justification='center', size=(10, 1))],
-           [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 1')],
-           [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 2')],
-           [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 3')]]
-
-
 # 'Map' tab of window for taking source and target nodes and showing path of map in red color
 map_layout = [
     # map
@@ -95,6 +88,10 @@ while True:
             path = networks.shortestPath(hospitals.get(values['source']), hospitals.get(values['dest']))
             distance = networks.findDistance(hospitals.get(values['source']), hospitals.get(values['dest']))
 
+            # print path between 2 nodes in terminal
+            print("Distance between ", values['source'], " and ", values['dest'])
+            print(path)
+
             # drawing red line on city map
             for el in waysLinesRed:
                 graph.SendFigureToBack(waysLinesRed[el])
@@ -114,9 +111,6 @@ while True:
                 # refresh window after drawing
                 window.refresh()
 
-            # print path between 2 nodes in terminal
-            print("Distance between ", values['source'], " and ", values['dest'])
-            print(path)
 
             # update 'Path' tab with length of shortest path and duration calculations
             window['-DISTANCE-'].update(str((distance).__round__(2)) + " meters")
