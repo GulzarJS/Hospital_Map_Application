@@ -92,7 +92,7 @@ while True:
             print("Distance between ", values['source'], " and ", values['dest'])
             print(path)
 
-            # drawing red line on city map
+            # reset all red lines by sending them back to back (black lines gets to be in front of the red lines)
             for el in waysLinesRed:
                 graph.SendFigureToBack(waysLinesRed[el])
 
@@ -104,12 +104,13 @@ while True:
                     firstNodeFlag = False
                     continue
 
+                # Bring red lines over the black lines
                 graph.BringFigureToFront(waysLinesRed[str(firstNode) + "," + str(path[i])])
 
                 firstNode = path[i]
 
                 # refresh window after drawing
-                window.refresh()
+            window.refresh()
 
 
             # update 'Path' tab with length of shortest path and duration calculations
