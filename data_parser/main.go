@@ -39,9 +39,11 @@ func main() {
 
 	startMain := time.Now()
 
+	// Keep ways and nodes in a map for later access
 	Nodes = make(map[osm.NodeID]osm.Node)
 	Ways = make(map[osm.WayID]osm.Way)
 
+	// csv file array with headers
 	records := [][]string{
 		{"a_node_id", "b_node_id", "distance", "a_node_lat", "a_node_lon", "b_node_lat", "b_node_lon"},
 	}
@@ -52,6 +54,7 @@ func main() {
 
 	startInit := time.Now()
 
+	// Take this section of map
 	boundsBaku := bounds{
 		topLat:    40.3829,
 		bottomLat: 40.3691,
@@ -73,6 +76,7 @@ func main() {
 
 	startScan := time.Now()
 
+	// Loop through objects in map file
 	for scanner.Scan() {
 		o := scanner.Object()
 
@@ -81,9 +85,13 @@ func main() {
 			var node *osm.Node = o.(*osm.Node)
 			Nodes[node.ID] = *node
 
+			// check if the node is inside the section's bounds
 			if boundsBaku.checkBounds(*node, *node) {
+
+				// check if the node is a hospital
 				if name, ok := node.TagMap()["amenity"]; ok && name == "hospital" {
-					//log.Printf("amenity: %v", node.TagMap())
+
+					// get hospital's name
 					hospitalName := ""
 					if name, ok := node.TagMap()["name:tr"]; ok {
 						hospitalName = name
@@ -98,6 +106,7 @@ func main() {
 						hospitalName = name
 					}
 
+					// add it to the csv array
 					nodesHospitals = append(nodesHospitals, []string{
 						fmt.Sprintf("%d", int64(node.ID)),
 						hospitalName,
@@ -113,16 +122,23 @@ func main() {
 			var way *osm.Way = o.(*osm.Way)
 			Ways[way.ID] = *way
 
+			// check if the way is a road
+			// Since osm file assumes every line in the map as a way, we need to only get the roads
 			if _, ok := way.TagMap()["highway"]; ok {
 				firstFlag := true
 				var firstNode osm.Node
 				for _, nodeID := range way.Nodes.NodeIDs() {
+
+					// needed to build ways with two nodes
 					if firstFlag {
 						firstFlag = false
 						firstNode = Nodes[nodeID]
 					} else {
 
+						// check if the way's nodes are inside the section's bounds
 						if boundsBaku.checkBounds(firstNode, Nodes[nodeID]) {
+
+							// add the way to csv array
 							records = append(records,
 								[]string{
 									fmt.Sprintf("%d", int64(firstNode.ID)),
@@ -134,6 +150,10 @@ func main() {
 									fmt.Sprintf("%f", Nodes[nodeID].Lon),
 								})
 
+							// this part finds the nearest way node to the hospital
+							// since all nodes come before ways in osm files,
+							// we can safely assume that all way nodes are already in our
+							// Nodes array
 							for i, nodeHospital := range nodesHospitals {
 								if nodeHospital[4] == "0" {
 									nodesHospitals[i][4] = fmt.Sprintf("%d", firstNode.ID)
@@ -143,6 +163,7 @@ func main() {
 
 									nearestDistance := calcDist(Nodes[osm.NodeID(hospitalNodeID)], Nodes[osm.NodeID(hospitalNearestNodeID)])
 
+									// check if any of the nodes in the way are near to the hospital's node
 									if nearestDistance > calcDist(Nodes[osm.NodeID(hospitalNodeID)], firstNode) {
 										nodesHospitals[i][4] = fmt.Sprintf("%d", firstNode.ID)
 									}
@@ -170,6 +191,7 @@ func main() {
 
 	startInit = time.Now()
 
+	// This part only writes to a csv file
 	fCsv, err := os.Create(".\\data\\datas.csv")
 
 	defer fCsv.Close()
@@ -214,18 +236,11 @@ func main() {
 	log.Printf("Program took %s", elapsed)
 }
 
-func calcLon(lon float64) float64 {
-	return (lon - 49.8533300) * 200000
-}
-
-func calcLat(lat float64) float64 {
-	return (lat - 40.3752500) * 200000
-}
-
 func calcDist(aNode, bNode osm.Node) float64 {
 	return distance(aNode.Lat, aNode.Lon, bNode.Lat, bNode.Lon)
 
 }
+
 // Distance function returns the distance (in meters) between two points of
 //     a given longitude and latitude relatively accurately (using a spherical
 //     approximation of the Earth) through the Haversin Distance Formula for
@@ -256,7 +271,6 @@ func distance(lat1, lon1, lat2, lon2 float64) float64 {
 func hsin(theta float64) float64 {
 	return math.Pow(math.Sin(theta/2), 2)
 }
-
 
 func (boundsA bounds) checkBounds(aNode, bNode osm.Node) bool {
 	return aNode.Lat <= boundsA.topLat && aNode.Lat >= boundsA.bottomLat &&
